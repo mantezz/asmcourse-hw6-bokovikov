@@ -1,0 +1,53 @@
+CC = gcc
+ASM = nasm
+
+CFLAGS += -std=gnu99 -g\
+
+CFLAGS += -Wall -Werror -Wformat-security -Wignored-qualifiers -Winit-self \
+          -Wswitch-default -Wpointer-arith -Wtype-limits -Wempty-body \
+          -Wstrict-prototypes -Wold-style-declaration -Wold-style-definition \
+          -Wmissing-parameter-type -Wmissing-field-initializers -Wnested-externs \
+          -Wstack-usage=4096 -Wmissing-prototypes -Wfloat-equal -Wabsolute-value
+      -fsanitize=undefined -fsanitize-undefined-trap-on-error
+CFLAGS += -m32 -no-pie -fno-pie -fno-pic
+
+ASMFLAGS = -f elf32
+
+
+LDLIBS = -lm
+LDFLAGS = -m32 -no-pie
+
+
+SRC_C = integral.c
+SRC_ASM = funcs.asm
+OBJS = $(SRC_C:.c=.o) $(SRC_ASM:.asm=.o)
+TARGET = integral
+
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+clean:
+	rm -f $(OBJS) *.o
+
+
+$(TARGET): $(OBJS)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+%.o: %.asm
+	$(ASM) $(ASMFLAGS) $< -o $@
+
+
+test: $(TARGET)
+	@./$(TARGET) --test-root "1:2:2.0:2.5:0.00001:2.30278"
+	@./$(TARGET) --test-root "2:3:1.0:2.0:0.000001:1.465571"
+	@./$(TARGET) --test-root "1:3:0.0:2.0:0.00001:1.79632"
+  
+  
+	@./$(TARGET) --test-integral "1:0.0:3.54:0.0001:6.2658"
+	@./$(TARGET) --test-integral "2:2.0:4.12:0.0001:14.2848"
+	@./$(TARGET) --test-integral "3:1.6:2.4512:0.00001:3.98196"
